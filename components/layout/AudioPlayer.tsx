@@ -184,8 +184,7 @@ export default function AudioPlayer() {
 
       {/* ─── MINI PLAYER BAR ─── */}
       <div
-        className="fixed bottom-0 left-0 md:left-56 right-0 z-30 bg-white dark:bg-[#181818] border-t border-gray-200 dark:border-gray-800 shadow-lg"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        className="fixed bottom-16 md:bottom-0 left-0 md:left-56 right-0 z-30 bg-white dark:bg-[#181818] border-t border-gray-200 dark:border-gray-800 shadow-lg"
       >
         <div className="h-16 sm:h-20 flex items-center px-3 md:px-4 gap-2 md:gap-4">
           {/* Cover + song info */}
