@@ -1,13 +1,18 @@
-import { DBData, Song, User, Category } from './types'
+import { Song, User, Category } from './types'
 
 const BASE_URL = 'https://api.jsonbin.io/v3/b'
+
+function cleanEnv(v: string | undefined): string {
+  return (v ?? '').replace(/^﻿/, '').replace(/[\r\n]/g, '').trim()
+}
 
 const headers = () => {
   const h: Record<string, string> = {
     'Content-Type': 'application/json',
-    'X-Master-Key': process.env.JSONBIN_MASTER_KEY!,
+    'X-Master-Key': cleanEnv(process.env.JSONBIN_MASTER_KEY),
   }
-  if (process.env.JSONBIN_API_KEY) h['X-Access-Key'] = process.env.JSONBIN_API_KEY
+  const accessKey = cleanEnv(process.env.JSONBIN_API_KEY)
+  if (accessKey) h['X-Access-Key'] = accessKey
   return h
 }
 
@@ -27,13 +32,16 @@ async function writeBin<T>(binId: string, data: T): Promise<void> {
     headers: headers(),
     body: JSON.stringify(data),
   })
-  if (!res.ok) throw new Error(`JSONBin write failed: ${res.status}`)
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`JSONBin write failed: ${res.status} ${body}`)
+  }
 }
 
 // Songs bin
 export async function getSongs(): Promise<Song[]> {
   try {
-    const data = await readBin<{ songs: Song[] }>(process.env.JSONBIN_BIN_SONGS!)
+    const data = await readBin<{ songs: Song[] }>(cleanEnv(process.env.JSONBIN_BIN_SONGS))
     return data.songs ?? []
   } catch {
     return []
@@ -41,13 +49,13 @@ export async function getSongs(): Promise<Song[]> {
 }
 
 export async function saveSongs(songs: Song[]): Promise<void> {
-  await writeBin(process.env.JSONBIN_BIN_SONGS!, { songs })
+  await writeBin(cleanEnv(process.env.JSONBIN_BIN_SONGS), { songs })
 }
 
 // Users bin
 export async function getUsers(): Promise<User[]> {
   try {
-    const data = await readBin<{ users: User[] }>(process.env.JSONBIN_BIN_USERS!)
+    const data = await readBin<{ users: User[] }>(cleanEnv(process.env.JSONBIN_BIN_USERS))
     return data.users ?? []
   } catch {
     return []
@@ -55,13 +63,13 @@ export async function getUsers(): Promise<User[]> {
 }
 
 export async function saveUsers(users: User[]): Promise<void> {
-  await writeBin(process.env.JSONBIN_BIN_USERS!, { users })
+  await writeBin(cleanEnv(process.env.JSONBIN_BIN_USERS), { users })
 }
 
 // Categories bin
 export async function getCategories(): Promise<Category[]> {
   try {
-    const data = await readBin<{ categories: Category[] }>(process.env.JSONBIN_BIN_CATEGORIES!)
+    const data = await readBin<{ categories: Category[] }>(cleanEnv(process.env.JSONBIN_BIN_CATEGORIES))
     return data.categories ?? []
   } catch {
     return []
@@ -69,7 +77,7 @@ export async function getCategories(): Promise<Category[]> {
 }
 
 export async function saveCategories(categories: Category[]): Promise<void> {
-  await writeBin(process.env.JSONBIN_BIN_CATEGORIES!, { categories })
+  await writeBin(cleanEnv(process.env.JSONBIN_BIN_CATEGORIES), { categories })
 }
 
 export function generateId(): string {
