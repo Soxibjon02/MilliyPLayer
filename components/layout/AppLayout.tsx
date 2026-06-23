@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Sidebar from './Sidebar'
 import AudioPlayer from './AudioPlayer'
+import Footer from './Footer'
 import { useAuth } from '@/context/AuthContext'
 
 interface AppLayoutProps {
@@ -45,6 +46,7 @@ export default function AppLayout({ children, requireAuth = false, adminOnly = f
       <Sidebar />
       <div className="flex-1 ml-56 flex flex-col min-h-screen pb-20">
         {children}
+        {!adminOnly && <Footer />}
       </div>
       <AudioPlayer />
     </div>

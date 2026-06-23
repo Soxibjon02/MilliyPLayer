@@ -11,21 +11,26 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#10B981',
-          dark: '#059669',
-          light: '#34D399',
+          DEFAULT: '#009FE3',
+          dark: '#007BC5',
+          light: '#33B5EA',
+        },
+        accent: {
+          DEFAULT: '#00A550',
+          dark: '#007A3D',
+          light: '#4DC98A',
         },
         surface: {
           DEFAULT: '#ffffff',
-          dark: '#121212',
+          dark: '#0D0F14',
         },
         card: {
-          DEFAULT: '#f3f4f6',
-          dark: '#1e1e1e',
+          DEFAULT: '#f0f6fc',
+          dark: '#141928',
         },
         sidebar: {
-          DEFAULT: '#f9fafb',
-          dark: '#0a0a0a',
+          DEFAULT: '#EAF4FB',
+          dark: '#08090F',
         },
       },
       fontFamily: {
