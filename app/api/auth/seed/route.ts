@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       passwordHash: hashPassword(adminPassword),
       role: 'admin',
       favorites: [],
+      playlists: [],
       createdAt: new Date().toISOString(),
     }
 

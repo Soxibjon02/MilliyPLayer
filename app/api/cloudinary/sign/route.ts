@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { v2 as cloudinary } from 'cloudinary'
+import crypto from 'crypto'
 import { getCurrentUserFromRequest } from '@/lib/auth'
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-})
+function clean(v: string | undefined) {
+  return (v ?? '').replace(/^﻿/, '').trim()
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,19 +14,20 @@ export async function POST(req: NextRequest) {
     }
 
     const { folder } = await req.json()
-    const timestamp = Math.round(Date.now() / 1000)
-    const paramsToSign = { folder, timestamp }
+    if (!folder) return NextResponse.json({ error: 'folder kerak' }, { status: 400 })
 
-    const signature = cloudinary.utils.api_sign_request(
-      paramsToSign,
-      process.env.CLOUDINARY_API_SECRET!
-    )
+    const timestamp = Math.round(Date.now() / 1000)
+    const apiSecret = clean(process.env.CLOUDINARY_API_SECRET)
+
+    // Cloudinary: SHA-1( "param1=v1&param2=v2" + api_secret ), params sorted alphabetically
+    const paramsStr = `folder=${folder}&timestamp=${timestamp}`
+    const signature = crypto.createHash('sha1').update(paramsStr + apiSecret).digest('hex')
 
     return NextResponse.json({
       signature,
       timestamp,
-      api_key: process.env.CLOUDINARY_API_KEY!,
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+      api_key: clean(process.env.CLOUDINARY_API_KEY),
+      cloud_name: clean(process.env.CLOUDINARY_CLOUD_NAME),
       folder,
     })
   } catch (err) {

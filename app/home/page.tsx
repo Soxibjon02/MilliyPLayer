@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { TrendingUp, Clock, Music, Headphones } from 'lucide-react'
+import { TrendingUp, Clock, Music, Headphones, Search } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import Header from '@/components/layout/Header'
 import SongCard from '@/components/ui/SongCard'
@@ -16,19 +17,15 @@ function UzbekPattern() {
       <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" aria-hidden="true">
         <defs>
           <pattern id="star-tile" x="0" y="0" width="64" height="64" patternUnits="userSpaceOnUse">
-            {/* Outer 8-pointed star */}
             <path
               d="M32,4 L37.7,26.3 L60,32 L37.7,37.7 L32,60 L26.3,37.7 L4,32 L26.3,26.3 Z"
               fill="none" stroke="white" strokeWidth="0.7" opacity="0.22"
             />
-            {/* Inner octagon */}
             <path
               d="M32,16 L40,24 L48,32 L40,40 L32,48 L24,40 L16,32 L24,24 Z"
               fill="none" stroke="white" strokeWidth="0.4" opacity="0.13"
             />
-            {/* Center diamond */}
             <path d="M32,27 L37,32 L32,37 L27,32 Z" fill="white" opacity="0.09" />
-            {/* Corner dots */}
             <circle cx="0"  cy="0"  r="1.3" fill="white" opacity="0.18" />
             <circle cx="64" cy="0"  r="1.3" fill="white" opacity="0.18" />
             <circle cx="0"  cy="64" r="1.3" fill="white" opacity="0.18" />
@@ -41,7 +38,6 @@ function UzbekPattern() {
   )
 }
 
-/* ── Uzbekistan flag colour stripe ── */
 function FlagStripe({ className = '' }: { className?: string }) {
   return (
     <div
@@ -54,7 +50,6 @@ function FlagStripe({ className = '' }: { className?: string }) {
   )
 }
 
-/* ── Section heading with gradient underline ── */
 function SectionTitle({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
   return (
     <div className="mb-5">
@@ -72,9 +67,13 @@ function SectionTitle({ icon: Icon, label }: { icon: React.ElementType; label: s
 
 export default function HomePage() {
   const { user } = useAuth()
+  const router = useRouter()
   const [songs, setSongs] = useState<Song[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const isAdmin = user?.role === 'admin'
 
   useEffect(() => {
     Promise.all([
@@ -89,9 +88,22 @@ export default function HomePage() {
   }, [])
 
   const trending = [...songs].sort((a, b) => b.playCount - a.playCount).slice(0, 10)
+
+  // Only songs added in the last 24 hours
+  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
   const recent = [...songs]
+    .filter((s) => new Date(s.createdAt).getTime() > oneDayAgo)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 10)
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+    } else {
+      router.push('/search')
+    }
+  }
 
   return (
     <AppLayout>
@@ -104,13 +116,11 @@ export default function HomePage() {
           style={{ background: 'linear-gradient(135deg,#009FE3 0%,#0077B6 40%,#005C99 65%,#00A550 100%)' }}
         >
           <UzbekPattern />
-
-          {/* Text side */}
           <div className="relative z-10 px-8 py-8 flex-1">
             {user ? (
               <>
                 <p className="text-white/65 text-xs font-medium tracking-widest uppercase mb-2">
-                  {user.role === 'admin' ? '★ Administrator' : '♪ Foydalanuvchi'}
+                  {isAdmin ? '★ Administrator' : '♪ Foydalanuvchi'}
                 </p>
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 leading-tight">
                   Xush kelibsiz, {user.name}!
@@ -146,34 +156,49 @@ export default function HomePage() {
             )}
             <FlagStripe className="h-1 w-40 mt-6" />
           </div>
-
-          {/* Right: decorative */}
           <div className="relative z-10 hidden lg:flex items-center justify-center pr-12 opacity-[0.12]">
             <Headphones className="w-36 h-36 text-white" />
           </div>
         </div>
 
-        {/* ─── STATS ROW ─── */}
-        {!loading && songs.length > 0 && (
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { value: songs.length, label: 'Jami musiqa', color: '#009FE3' },
-              { value: categories.length, label: 'Kategoriya', color: '#00A550' },
-              { value: (trending[0]?.playCount ?? 0).toLocaleString(), label: 'Top tinglanish', color: '#CE1126' },
-            ].map(({ value, label, color }) => (
-              <div
-                key={label}
-                className="rounded-xl p-4 border"
-                style={{
-                  background: `linear-gradient(135deg, ${color}18, ${color}08)`,
-                  borderColor: `${color}30`,
-                }}
-              >
-                <p className="text-2xl font-bold truncate" style={{ color }}>{value}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
+        {/* ─── ADMIN STATS / USER SEARCH ─── */}
+        {!loading && (
+          isAdmin ? (
+            /* Stats only for admin */
+            songs.length > 0 && (
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { value: songs.length, label: 'Jami musiqa', color: '#009FE3' },
+                  { value: categories.length, label: 'Kategoriya', color: '#00A550' },
+                  { value: (trending[0]?.playCount ?? 0).toLocaleString(), label: 'Top tinglanish', color: '#CE1126' },
+                ].map(({ value, label, color }) => (
+                  <div
+                    key={label}
+                    className="rounded-xl p-4 border"
+                    style={{
+                      background: `linear-gradient(135deg, ${color}18, ${color}08)`,
+                      borderColor: `${color}30`,
+                    }}
+                  >
+                    <p className="text-2xl font-bold truncate" style={{ color }}>{value}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )
+          ) : (
+            /* Search bar for regular users & guests */
+            <form onSubmit={handleSearch} className="relative max-w-xl">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Musiqa yoki ijrochi qidiring..."
+                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e1e1e] text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+              />
+            </form>
+          )
         )}
 
         {/* ─── SONGS ─── */}
@@ -182,7 +207,6 @@ export default function HomePage() {
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : songs.length === 0 ? (
-          /* Empty state */
           <div className="flex flex-col items-center justify-center py-20 gap-5">
             <div
               className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg"
@@ -211,15 +235,17 @@ export default function HomePage() {
               </div>
             </section>
 
-            {/* Recently added */}
-            <section>
-              <SectionTitle icon={Clock} label="Yangi Qo'shilganlar" />
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {recent.map((song) => (
-                  <SongCard key={song.id} song={song} queue={recent} categories={categories} />
-                ))}
-              </div>
-            </section>
+            {/* Recently added — only last 24h */}
+            {recent.length > 0 && (
+              <section>
+                <SectionTitle icon={Clock} label="Yangi Qo'shilganlar" />
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {recent.map((song) => (
+                    <SongCard key={song.id} song={song} queue={recent} categories={categories} />
+                  ))}
+                </div>
+              </section>
+            )}
           </>
         )}
       </main>

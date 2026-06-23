@@ -1,5 +1,12 @@
 export type UserRole = 'admin' | 'user'
 
+export interface Playlist {
+  id: string
+  name: string
+  songIds: string[]
+  createdAt: string
+}
+
 export interface User {
   id: string
   name: string
@@ -7,7 +14,8 @@ export interface User {
   passwordHash: string
   role: UserRole
   createdAt: string
-  favorites: string[] // song ids
+  favorites: string[]
+  playlists: Playlist[]
 }
 
 export interface Song {
@@ -46,4 +54,5 @@ export interface AuthUser {
   email: string
   role: UserRole
   favorites: string[]
+  playlists: Playlist[]
 }

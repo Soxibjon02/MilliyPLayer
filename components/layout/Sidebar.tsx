@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Search, Grid3X3, Heart, LayoutDashboard, Music, ListMusic, BarChart2, LogOut, LogIn } from 'lucide-react'
+import { Home, Search, Grid3X3, Heart, LayoutDashboard, Music, ListMusic, BarChart2, LogOut, LogIn, ListPlus } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
 
@@ -14,6 +14,7 @@ const publicLinks = [
 
 const authLinks = [
   { href: '/favorites', label: 'Sevimlilar', icon: Heart },
+  { href: '/playlists', label: 'Playlistlar', icon: ListPlus },
 ]
 
 const adminLinks = [

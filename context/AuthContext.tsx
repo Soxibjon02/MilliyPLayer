@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { AuthUser } from '@/lib/types'
+import { AuthUser, Playlist } from '@/lib/types'
 
 interface AuthContextType {
   user: AuthUser | null
@@ -10,6 +10,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<{ error?: string }>
   logout: () => Promise<void>
   updateFavorites: (favorites: string[]) => void
+  updatePlaylists: (playlists: Playlist[]) => void
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
@@ -58,8 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) setUser({ ...user, favorites })
   }
 
+  function updatePlaylists(playlists: Playlist[]) {
+    if (user) setUser({ ...user, playlists })
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateFavorites }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateFavorites, updatePlaylists }}>
       {children}
     </AuthContext.Provider>
   )

@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       passwordHash: hashPassword(password),
       role: 'user',
       favorites: [],
+      playlists: [],
       createdAt: new Date().toISOString(),
     }
 
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     const token = signToken({ userId: newUser.id, email: newUser.email, role: newUser.role })
     const res = NextResponse.json({
-      user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, favorites: [] },
+      user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, favorites: [], playlists: [] },
     })
     res.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,

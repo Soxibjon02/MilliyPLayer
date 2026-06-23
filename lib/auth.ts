@@ -41,5 +41,6 @@ export function userToAuth(user: User): AuthUser {
     email: user.email,
     role: user.role,
     favorites: user.favorites ?? [],
+    playlists: user.playlists ?? [],
   }
 }

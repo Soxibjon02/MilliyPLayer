@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const COOKIE_NAME = 'millyplayer_token'
 const AUTH_PAGES = ['/login', '/register']
-const PROTECTED_PATHS = ['/favorites', '/admin']
+const PROTECTED_PATHS = ['/favorites', '/admin', '/playlists']
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
