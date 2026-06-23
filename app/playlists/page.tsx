@@ -73,7 +73,7 @@ export default function PlaylistsPage() {
           <button
             type="submit"
             disabled={!newName.trim() || creating}
-            className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium disabled:opacity-50 hover:bg-primary-dark transition flex items-center gap-2"
+            className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary-dark transition flex items-center gap-2"
           >
             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
             Yaratish
