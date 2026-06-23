@@ -4,15 +4,27 @@ const COOKIE_NAME = 'millyplayer_token'
 const AUTH_PAGES = ['/login', '/register']
 const PROTECTED_PATHS = ['/favorites', '/admin', '/playlists']
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon') ||
-    pathname.startsWith('/api')
-  ) {
+  if (pathname.startsWith('/_next') || pathname.startsWith('/favicon')) {
     return NextResponse.next()
+  }
+
+  // CORS: handle API routes
+  if (pathname.startsWith('/api')) {
+    if (req.method === 'OPTIONS') {
+      return new NextResponse(null, { status: 200, headers: CORS_HEADERS })
+    }
+    const res = NextResponse.next()
+    Object.entries(CORS_HEADERS).forEach(([k, v]) => res.headers.set(k, v))
+    return res
   }
 
   const hasToken = req.cookies.has(COOKIE_NAME)
