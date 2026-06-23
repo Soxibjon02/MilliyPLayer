@@ -22,7 +22,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetch('/api/auth/me')
       .then((r) => r.json())
-      .then((d) => setUser(d.user))
+      .then((d) => {
+        // Race condition fix: if login/register already ran and set user,
+        // only overwrite if /api/auth/me found a valid session.
+        // This prevents a slow /api/auth/me call from nullifying a fresh register/login.
+        setUser((prev) => {
+          if (d.user) return d.user   // server has a session → use authoritative value
+          if (prev !== null) return prev  // login/register already set user → keep it
+          return null
+        })
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -35,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json()
     if (!res.ok) return { error: data.error }
     setUser(data.user)
+    setLoading(false)
     return { role: data.user?.role as string | undefined }
   }
 
@@ -47,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json()
     if (!res.ok) return { error: data.error }
     setUser(data.user)
+    setLoading(false)
     return {}
   }
 

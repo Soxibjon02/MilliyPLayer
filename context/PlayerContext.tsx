@@ -22,12 +22,16 @@ interface PlayerContextType {
 
 const PlayerContext = createContext<PlayerContextType>({} as PlayerContextType)
 
-const PLAY_COUNT_DELAY = 15_000 // 15 seconds before counting
+const PLAY_COUNT_DELAY = 15_000
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const countedRef = useRef<Set<string>>(new Set())
   const playTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Refs that stay current inside stale event-listener closures
+  const currentSongRef = useRef<Song | null>(null)
+  const queueRef = useRef<Song[]>([])
 
   const [currentSong, setCurrentSong] = useState<Song | null>(null)
   const [queue, setQueue] = useState<Song[]>([])
@@ -37,17 +41,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [volume, setVolumeState] = useState(0.8)
   const [showLyrics, setShowLyrics] = useState(false)
 
-  // 1. Initial configuration on mount
+  // Keep refs in sync so event listeners always see latest values
+  useEffect(() => { currentSongRef.current = currentSong }, [currentSong])
+  useEffect(() => { queueRef.current = queue }, [queue])
+
   useEffect(() => {
     const audio = new Audio()
-    // Load volume from local storage if exists
     const savedVol = localStorage.getItem('millyplayer_volume')
     const startVol = savedVol ? Number(savedVol) : 0.8
     audio.volume = startVol
     setVolumeState(startVol)
     audioRef.current = audio
 
-    // Try to restore last state
     try {
       const savedSong = localStorage.getItem('millyplayer_currentSong')
       const savedQueue = localStorage.getItem('millyplayer_queue')
@@ -56,8 +61,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       if (savedSong) {
         const songData = JSON.parse(savedSong) as Song
         setCurrentSong(songData)
+        currentSongRef.current = songData
         audio.src = songData.audioUrl
-        
         if (savedProgress) {
           const time = Number(savedProgress)
           audio.currentTime = time
@@ -65,33 +70,57 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         }
       }
       if (savedQueue) {
-        setQueue(JSON.parse(savedQueue) as Song[])
+        const q = JSON.parse(savedQueue) as Song[]
+        setQueue(q)
+        queueRef.current = q
       }
     } catch (e) {
-      console.error('Failed to restore player state from localStorage', e)
+      console.error('Failed to restore player state', e)
     }
 
     audio.addEventListener('timeupdate', () => {
       setProgress(audio.currentTime)
-      // Save progress to local storage occasionally
       if (audio.currentTime > 0) {
         localStorage.setItem('millyplayer_progress', String(audio.currentTime))
       }
     })
-    audio.addEventListener('durationchange', () => {
-      setDuration(audio.duration)
-    })
-    audio.addEventListener('ended', () => {
-      handleNext()
-    })
+    audio.addEventListener('durationchange', () => setDuration(audio.duration))
     audio.addEventListener('play', () => setIsPlaying(true))
     audio.addEventListener('pause', () => setIsPlaying(false))
+
+    // Auto-play next — uses refs to avoid stale closure problem
+    audio.addEventListener('ended', () => {
+      const song = currentSongRef.current
+      const q = queueRef.current
+      if (!song || q.length === 0) return
+      const idx = q.findIndex((s) => s.id === song.id)
+      const nextSong = q[(idx + 1) % q.length]
+      if (!nextSong) return
+
+      audio.src = nextSong.audioUrl
+      audio.play().catch(console.error)
+      setCurrentSong(nextSong)
+      currentSongRef.current = nextSong
+      setProgress(0)
+      localStorage.setItem('millyplayer_currentSong', JSON.stringify(nextSong))
+      localStorage.setItem('millyplayer_progress', '0')
+
+      // Play count for auto-played song
+      if (!countedRef.current.has(nextSong.id)) {
+        if (playTimerRef.current) clearTimeout(playTimerRef.current)
+        playTimerRef.current = setTimeout(() => {
+          if (!countedRef.current.has(nextSong.id)) {
+            countedRef.current.add(nextSong.id)
+            fetch(`/api/songs/${nextSong.id}/play`, { method: 'POST' }).catch(() => {})
+          }
+        }, PLAY_COUNT_DELAY)
+      }
+    })
 
     return () => {
       audio.pause()
       audio.src = ''
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function startPlayCountTimer(songId: string) {
@@ -108,13 +137,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current!
     if (playTimerRef.current) clearTimeout(playTimerRef.current)
 
-    // Save state
     localStorage.setItem('millyplayer_currentSong', JSON.stringify(song))
     setCurrentSong(song)
+    currentSongRef.current = song
 
     if (newQueue) {
       localStorage.setItem('millyplayer_queue', JSON.stringify(newQueue))
       setQueue(newQueue)
+      queueRef.current = newQueue
     }
 
     audio.src = song.audioUrl
@@ -136,22 +166,21 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }
 
   function handleNext() {
-    if (!currentSong || queue.length === 0) return
-    const idx = queue.findIndex((s) => s.id === currentSong.id)
-    const next = queue[(idx + 1) % queue.length]
-    if (next) playSong(next, queue)
+    const song = currentSongRef.current
+    const q = queueRef.current
+    if (!song || q.length === 0) return
+    const idx = q.findIndex((s) => s.id === song.id)
+    playSong(q[(idx + 1) % q.length], q)
   }
 
   function handlePrev() {
     const audio = audioRef.current!
-    if (audio.currentTime > 3) {
-      audio.currentTime = 0
-      return
-    }
-    if (!currentSong || queue.length === 0) return
-    const idx = queue.findIndex((s) => s.id === currentSong.id)
-    const prev = queue[(idx - 1 + queue.length) % queue.length]
-    if (prev) playSong(prev, queue)
+    if (audio.currentTime > 3) { audio.currentTime = 0; return }
+    const song = currentSongRef.current
+    const q = queueRef.current
+    if (!song || q.length === 0) return
+    const idx = q.findIndex((s) => s.id === song.id)
+    playSong(q[(idx - 1 + q.length) % q.length], q)
   }
 
   function seek(pct: number) {
@@ -163,30 +192,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Handle volume set and persist
   function setVolume(v: number) {
     const audio = audioRef.current!
     audio.volume = v
     setVolumeState(v)
+    localStorage.setItem('millyplayer_volume', String(v))
   }
 
   return (
     <PlayerContext.Provider
       value={{
-        currentSong,
-        queue,
-        isPlaying,
-        progress,
-        duration,
-        volume,
-        showLyrics,
-        playSong,
-        togglePlay,
-        next: handleNext,
-        prev: handlePrev,
-        seek,
-        setVolume,
-        toggleLyrics: () => setShowLyrics((p) => !p),
+        currentSong, queue, isPlaying, progress, duration, volume, showLyrics,
+        playSong, togglePlay, next: handleNext, prev: handlePrev,
+        seek, setVolume, toggleLyrics: () => setShowLyrics((p) => !p),
       }}
     >
       {children}

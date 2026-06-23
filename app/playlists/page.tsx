@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Trash2, ListPlus, Music, Loader2 } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
@@ -11,6 +11,11 @@ import { useAuth } from '@/context/AuthContext'
 export default function PlaylistsPage() {
   const { user, updatePlaylists } = useAuth()
   const [playlists, setPlaylists] = useState<Playlist[]>(user?.playlists ?? [])
+
+  // Sync when user.playlists loads from /api/auth/me
+  useEffect(() => {
+    if (user?.playlists) setPlaylists(user.playlists)
+  }, [user?.playlists])
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
