@@ -42,8 +42,26 @@ export default function HomePage() {
       <Header title="Bosh sahifa" />
       <main className="px-6 py-6 space-y-8">
         <div className="bg-gradient-to-r from-primary to-primary-dark rounded-2xl p-6 text-white">
-          <h2 className="text-xl font-bold mb-1">Xush kelibsiz, {user?.name}! 👋</h2>
-          <p className="text-white/70 text-sm">Bugun qanday musiqa tinglaysiz?</p>
+          {user ? (
+            <>
+              <h2 className="text-xl font-bold mb-1">Xush kelibsiz, {user.name}!</h2>
+              <p className="text-white/70 text-sm">Bugun qanday musiqa tinglaysiz?</p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-bold mb-1">MilliyPlayer'ga xush kelibsiz!</h2>
+              <p className="text-white/70 text-sm">
+                Sevimli musiqalaringizni saqlash uchun{' '}
+                <a href="/login" className="underline font-semibold hover:text-white/90 transition">
+                  kiring
+                </a>
+                {' '}yoki{' '}
+                <a href="/register" className="underline font-semibold hover:text-white/90 transition">
+                  ro'yxatdan o'ting
+                </a>
+              </p>
+            </>
+          )}
         </div>
 
         {songs.length === 0 ? (

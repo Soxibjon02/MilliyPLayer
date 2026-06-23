@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const COOKIE_NAME = 'millyplayer_token'
-const PUBLIC_PATHS = ['/login', '/register']
+const AUTH_PAGES = ['/login', '/register']
+const PROTECTED_PATHS = ['/favorites', '/admin']
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Allow static and API routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
@@ -17,19 +17,19 @@ export function middleware(req: NextRequest) {
 
   const hasToken = req.cookies.has(COOKIE_NAME)
 
-  // Root → redirect
+  // Root → home always
   if (pathname === '/') {
-    return NextResponse.redirect(new URL(hasToken ? '/home' : '/login', req.url))
+    return NextResponse.redirect(new URL('/home', req.url))
   }
 
-  // Auth pages → redirect if logged in
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  // Auth pages → redirect if already logged in
+  if (AUTH_PAGES.some((p) => pathname.startsWith(p))) {
     if (hasToken) return NextResponse.redirect(new URL('/home', req.url))
     return NextResponse.next()
   }
 
-  // Protected pages → redirect if not logged in
-  if (!hasToken) {
+  // Only favorites and admin require login
+  if (PROTECTED_PATHS.some((p) => pathname.startsWith(p)) && !hasToken) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 

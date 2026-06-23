@@ -2,14 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Search, Grid3X3, Heart, LayoutDashboard, Music, ListMusic, BarChart2, LogOut } from 'lucide-react'
+import { Home, Search, Grid3X3, Heart, LayoutDashboard, Music, ListMusic, BarChart2, LogOut, LogIn } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
 
-const userLinks = [
+const publicLinks = [
   { href: '/home', label: 'Bosh sahifa', icon: Home },
   { href: '/search', label: 'Qidirish', icon: Search },
   { href: '/categories', label: 'Kategoriyalar', icon: Grid3X3 },
+]
+
+const authLinks = [
   { href: '/favorites', label: 'Sevimlilar', icon: Heart },
 ]
 
@@ -24,6 +27,12 @@ export default function Sidebar() {
   const { user, logout } = useAuth()
   const isAdmin = user?.role === 'admin'
   const isAdminRoute = pathname.startsWith('/admin')
+
+  const navLinks = isAdminRoute && isAdmin
+    ? adminLinks
+    : user
+    ? [...publicLinks, ...authLinks]
+    : publicLinks
 
   return (
     <aside className="fixed left-0 top-0 h-full w-56 bg-sidebar-DEFAULT dark:bg-sidebar-dark border-r border-gray-200 dark:border-gray-800 flex flex-col z-30">
@@ -62,7 +71,7 @@ export default function Sidebar() {
 
       {/* Nav links */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {(isAdminRoute && isAdmin ? adminLinks : userLinks).map(({ href, label, icon: Icon }) => {
+        {navLinks.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== '/home' && href !== '/admin' && pathname.startsWith(href))
           return (
             <Link
@@ -82,27 +91,37 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* User info */}
-      {user && (
-        <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-800">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold">
-              {user.name[0].toUpperCase()}
+      {/* Bottom: user info or login button */}
+      <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-800">
+        {user ? (
+          <>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold">
+                {user.name[0].toUpperCase()}
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user.role}</p>
+              </div>
             </div>
-            <div className="overflow-hidden">
-              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.name}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user.role}</p>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-red-500 transition w-full"
+            <button
+              onClick={logout}
+              className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-red-500 transition w-full"
+            >
+              <LogOut className="w-4 h-4" />
+              Chiqish
+            </button>
+          </>
+        ) : (
+          <Link
+            href="/login"
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition justify-center"
           >
-            <LogOut className="w-4 h-4" />
-            Chiqish
-          </button>
-        </div>
-      )}
+            <LogIn className="w-4 h-4" />
+            Kirish
+          </Link>
+        )}
+      </div>
     </aside>
   )
 }

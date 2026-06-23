@@ -8,23 +8,26 @@ import { useAuth } from '@/context/AuthContext'
 
 interface AppLayoutProps {
   children: React.ReactNode
+  requireAuth?: boolean
   adminOnly?: boolean
 }
 
-export default function AppLayout({ children, adminOnly = false }: AppLayoutProps) {
+export default function AppLayout({ children, requireAuth = false, adminOnly = false }: AppLayoutProps) {
   const { user, loading } = useAuth()
   const router = useRouter()
 
+  const needsAuth = requireAuth || adminOnly
+
   useEffect(() => {
     if (loading) return
-    if (!user) {
+    if (needsAuth && !user) {
       router.replace('/login')
       return
     }
-    if (adminOnly && user.role !== 'admin') {
+    if (adminOnly && user && user.role !== 'admin') {
       router.replace('/home')
     }
-  }, [user, loading, router, adminOnly])
+  }, [user, loading, router, needsAuth, adminOnly])
 
   if (loading) {
     return (
@@ -34,7 +37,8 @@ export default function AppLayout({ children, adminOnly = false }: AppLayoutProp
     )
   }
 
-  if (!user || (adminOnly && user.role !== 'admin')) return null
+  if (needsAuth && !user) return null
+  if (adminOnly && user?.role !== 'admin') return null
 
   return (
     <div className="flex min-h-screen bg-white dark:bg-surface-dark">

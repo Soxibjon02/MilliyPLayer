@@ -27,7 +27,7 @@ export default function FavoritesPage() {
   const favorites = songs.filter((s) => user?.favorites?.includes(s.id))
 
   return (
-    <AppLayout>
+    <AppLayout requireAuth>
       <Header title="Sevimlilar" />
       <main className="px-6 py-6">
         <div className="flex items-center gap-2 mb-6">
