@@ -148,6 +148,17 @@ export default function Sidebar() {
           )
         })}
 
+        {/* Admin: "Saytga o'tish" link on mobile when on admin routes */}
+        {isAdmin && isAdminRoute && (
+          <Link
+            href="/home"
+            className="flex flex-col items-center justify-center flex-1 py-1 px-2 rounded-lg text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-primary transition"
+          >
+            <Home className="w-5 h-5 mb-0.5" />
+            <span>Saytga</span>
+          </Link>
+        )}
+
         {/* Profile / Login representation on Mobile bottom bar */}
         {user ? (
           <button
