@@ -27,19 +27,24 @@ export default function AdminCategoriesPage() {
     if (!newName.trim()) return
     setAdding(true)
     setError('')
-    const res = await fetch('/api/categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName.trim() }),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error)
-    } else {
-      setCategories((prev) => [...prev, data.category])
-      setNewName('')
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? 'Xato yuz berdi')
+      } else {
+        setCategories((prev) => [...prev, data.category])
+        setNewName('')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Tarmoq xatosi')
+    } finally {
+      setAdding(false)
     }
-    setAdding(false)
   }
 
   async function handleEdit(id: string) {

@@ -7,7 +7,8 @@ export async function GET() {
   try {
     const categories = await getCategories()
     return NextResponse.json({ categories })
-  } catch {
+  } catch (err) {
+    console.error('GET categories error:', err)
     return NextResponse.json({ error: 'Server xatosi' }, { status: 500 })
   }
 }
@@ -38,7 +39,9 @@ export async function POST(req: NextRequest) {
 
     await saveCategories([...categories, category])
     return NextResponse.json({ category }, { status: 201 })
-  } catch {
-    return NextResponse.json({ error: 'Server xatosi' }, { status: 500 })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('POST categories error:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

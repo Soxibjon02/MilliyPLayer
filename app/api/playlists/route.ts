@@ -41,7 +41,9 @@ export async function POST(req: NextRequest) {
     await saveUsers(users)
 
     return NextResponse.json({ playlist }, { status: 201 })
-  } catch {
-    return NextResponse.json({ error: 'Server xatosi' }, { status: 500 })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('POST playlists error:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
