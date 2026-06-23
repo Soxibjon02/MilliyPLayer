@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
 
     const token = signToken({ userId: user.id, email: user.email, role: user.role })
     const res = NextResponse.json({
+      token, // returned for mobile clients (stored in SecureStore, sent as Bearer)
       user: {
         id: user.id,
         name: user.name,

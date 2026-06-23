@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
 
     const token = signToken({ userId: newUser.id, email: newUser.email, role: newUser.role })
     const res = NextResponse.json({
+      token, // returned for mobile clients
       user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, favorites: [], playlists: [] },
     })
     res.cookies.set(COOKIE_NAME, token, {

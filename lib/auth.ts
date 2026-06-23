@@ -26,8 +26,17 @@ export function verifyToken(token: string): JWTPayload | null {
 }
 
 // For use in API route handlers (Server Components context)
+// Supports both httpOnly cookie (web) and Authorization: Bearer (mobile)
 export async function getCurrentUserFromRequest(): Promise<JWTPayload | null> {
-  const { cookies } = await import('next/headers')
+  const { cookies, headers } = await import('next/headers')
+
+  // Bearer token takes priority (React Native mobile app)
+  const authHeader = headers().get('Authorization')
+  if (authHeader?.startsWith('Bearer ')) {
+    return verifyToken(authHeader.slice(7))
+  }
+
+  // Fall back to cookie (web)
   const cookieStore = cookies()
   const token = cookieStore.get(COOKIE_NAME)?.value
   if (!token) return null
