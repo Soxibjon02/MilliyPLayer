@@ -2,11 +2,14 @@ import { DBData, Song, User, Category } from './types'
 
 const BASE_URL = 'https://api.jsonbin.io/v3/b'
 
-const headers = () => ({
-  'Content-Type': 'application/json',
-  'X-Master-Key': process.env.JSONBIN_MASTER_KEY!,
-  'X-Access-Key': process.env.JSONBIN_API_KEY!,
-})
+const headers = () => {
+  const h: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Master-Key': process.env.JSONBIN_MASTER_KEY!,
+  }
+  if (process.env.JSONBIN_API_KEY) h['X-Access-Key'] = process.env.JSONBIN_API_KEY
+  return h
+}
 
 async function readBin<T>(binId: string): Promise<T> {
   const res = await fetch(`${BASE_URL}/${binId}/latest`, {
