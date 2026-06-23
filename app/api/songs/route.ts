@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSongs, saveSongs, generateId } from '@/lib/jsonbin'
 import { getCurrentUserFromRequest } from '@/lib/auth'
-import { uploadImage, uploadAudio } from '@/lib/cloudinary'
 import { Song } from '@/lib/types'
 
 export async function GET(req: NextRequest) {
@@ -27,24 +26,21 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// Files are uploaded directly to Cloudinary from the browser.
+// This endpoint only receives the resulting URLs + metadata.
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUserFromRequest()
     if (!user || user.role !== 'admin') {
-      return NextResponse.json({ error: 'Ruxsat yo\'q' }, { status: 403 })
+      return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 })
     }
 
     const body = await req.json()
-    const { title, artist, categoryIds, coverBase64, audioBase64, lyrics } = body
+    const { title, artist, categoryIds, coverUrl, audioUrl, lyrics } = body
 
-    if (!title || !artist || !coverBase64 || !audioBase64) {
+    if (!title || !artist || !coverUrl || !audioUrl) {
       return NextResponse.json({ error: "Majburiy maydonlar to'ldirilmagan" }, { status: 400 })
     }
-
-    const [coverUrl, audioUrl] = await Promise.all([
-      uploadImage(coverBase64),
-      uploadAudio(audioBase64),
-    ])
 
     const song: Song = {
       id: generateId(),
