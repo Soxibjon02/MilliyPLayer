@@ -18,6 +18,7 @@ export async function GET() {
         email: user.email,
         role: user.role,
         favorites: user.favorites ?? [],
+        playlists: user.playlists ?? [],
       },
     })
   } catch {

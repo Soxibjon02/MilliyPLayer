@@ -1,10 +1,30 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Music, Mail, Heart } from 'lucide-react'
+import { Music, Mail } from 'lucide-react'
+import { FooterSettings } from '@/lib/footerTypes'
 
 export default function Footer() {
   const year = new Date().getFullYear()
+  const [settings, setSettings] = useState<FooterSettings>({
+    email: 'soxibgaybullayev439@gmail.com',
+    developerName: 'Sokhib Khaybullayev',
+    developerRole: 'Full-stack Developer',
+    description: "O'zbek milliy musiqasini sevuvchilar uchun zamonaviy musiqa streaming platforma.",
+    techStack: 'Next.js 14, TypeScript, Tailwind CSS, Cloudinary va JSONBin.io bilan qurildi.',
+  })
+
+  useEffect(() => {
+    fetch('/api/admin/footer')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.settings) {
+          setSettings(data.settings)
+        }
+      })
+      .catch((e) => console.error('Failed to load footer settings', e))
+  }, [])
 
   return (
     <footer className="bg-[#070A12] mt-auto">
@@ -31,7 +51,7 @@ export default function Footer() {
               <span className="text-white font-bold text-lg">MilliyPlayer</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
-              O'zbek milliy musiqasini sevuvchilar uchun zamonaviy musiqa streaming platforma.
+              {settings.description}
             </p>
             {/* Mini Uzbek flag */}
             <div
@@ -59,7 +79,7 @@ export default function Footer() {
                 <Link
                   key={href}
                   href={href}
-                  className="block text-gray-400 hover:text-[#009FE3] text-sm transition-colors"
+                  className="block text-gray-400 hover:text-[#009FE3] text-sm transition-colors duration-300"
                 >
                   {label}
                 </Link>
@@ -77,22 +97,26 @@ export default function Footer() {
                 className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
                 style={{ background: 'linear-gradient(135deg, #009FE3, #00A550)' }}
               >
-                SK
+                {settings.developerName
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .toUpperCase()}
               </div>
               <div>
-                <p className="text-white font-semibold text-sm">Sokhib Khaybullayev</p>
-                <p className="text-gray-400 text-xs">Full-stack Developer</p>
+                <p className="text-white font-semibold text-sm">{settings.developerName}</p>
+                <p className="text-gray-400 text-xs">{settings.developerRole}</p>
               </div>
             </div>
             <p className="text-gray-500 text-xs leading-relaxed mb-3">
-              Next.js 14, TypeScript, Tailwind CSS, Cloudinary va JSONBin.io bilan qurildi.
+              {settings.techStack}
             </p>
             <a
-              href="mailto:khusniddindev@gmail.com"
+              href={`mailto:${settings.email}`}
               className="inline-flex items-center gap-1.5 text-[#009FE3] hover:text-[#33B5EA] text-xs transition-colors"
             >
               <Mail className="w-3.5 h-3.5" />
-              khusniddindev@gmail.com
+              {settings.email}
             </a>
           </div>
         </div>
@@ -103,8 +127,7 @@ export default function Footer() {
             <span>© {year} MilliyPlayer</span>
             <span className="text-gray-700">•</span>
             <span className="flex items-center gap-1">
-              <Heart className="w-3 h-3 text-[#CE1126] fill-[#CE1126]" />
-              Sokhib Khaybullayev tomonidan yaratildi
+              {settings.developerName} tomonidan yaratildi
             </span>
             <span className="text-gray-700">•</span>
             <span>Barcha huquqlar himoyalangan</span>

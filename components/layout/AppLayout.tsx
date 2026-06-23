@@ -44,8 +44,10 @@ export default function AppLayout({ children, requireAuth = false, adminOnly = f
   return (
     <div className="flex min-h-screen bg-white dark:bg-surface-dark">
       <Sidebar />
-      <div className="flex-1 ml-56 flex flex-col min-h-screen pb-20">
-        {children}
+      <div className="flex-1 md:ml-56 ml-0 flex flex-col min-h-screen pb-36 md:pb-24">
+        <div className="flex-1 page-transition">
+          {children}
+        </div>
         {!adminOnly && <Footer />}
       </div>
       <AudioPlayer />

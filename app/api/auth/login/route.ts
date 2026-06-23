@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
         email: user.email,
         role: user.role,
         favorites: user.favorites ?? [],
+        playlists: user.playlists ?? [],
       },
     })
     res.cookies.set(COOKIE_NAME, token, {

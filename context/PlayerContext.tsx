@@ -37,13 +37,46 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [volume, setVolumeState] = useState(0.8)
   const [showLyrics, setShowLyrics] = useState(false)
 
+  // 1. Initial configuration on mount
   useEffect(() => {
     const audio = new Audio()
-    audio.volume = volume
+    // Load volume from local storage if exists
+    const savedVol = localStorage.getItem('millyplayer_volume')
+    const startVol = savedVol ? Number(savedVol) : 0.8
+    audio.volume = startVol
+    setVolumeState(startVol)
     audioRef.current = audio
+
+    // Try to restore last state
+    try {
+      const savedSong = localStorage.getItem('millyplayer_currentSong')
+      const savedQueue = localStorage.getItem('millyplayer_queue')
+      const savedProgress = localStorage.getItem('millyplayer_progress')
+
+      if (savedSong) {
+        const songData = JSON.parse(savedSong) as Song
+        setCurrentSong(songData)
+        audio.src = songData.audioUrl
+        
+        if (savedProgress) {
+          const time = Number(savedProgress)
+          audio.currentTime = time
+          setProgress(time)
+        }
+      }
+      if (savedQueue) {
+        setQueue(JSON.parse(savedQueue) as Song[])
+      }
+    } catch (e) {
+      console.error('Failed to restore player state from localStorage', e)
+    }
 
     audio.addEventListener('timeupdate', () => {
       setProgress(audio.currentTime)
+      // Save progress to local storage occasionally
+      if (audio.currentTime > 0) {
+        localStorage.setItem('millyplayer_progress', String(audio.currentTime))
+      }
     })
     audio.addEventListener('durationchange', () => {
       setDuration(audio.duration)
@@ -75,11 +108,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current!
     if (playTimerRef.current) clearTimeout(playTimerRef.current)
 
+    // Save state
+    localStorage.setItem('millyplayer_currentSong', JSON.stringify(song))
+    setCurrentSong(song)
+
+    if (newQueue) {
+      localStorage.setItem('millyplayer_queue', JSON.stringify(newQueue))
+      setQueue(newQueue)
+    }
+
     audio.src = song.audioUrl
     audio.play().catch(console.error)
-    setCurrentSong(song)
-    if (newQueue) setQueue(newQueue)
     setProgress(0)
+    localStorage.setItem('millyplayer_progress', '0')
     startPlayCountTimer(song.id)
   }
 
@@ -118,9 +159,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (duration) {
       audio.currentTime = pct * duration
       setProgress(audio.currentTime)
+      localStorage.setItem('millyplayer_progress', String(audio.currentTime))
     }
   }
 
+  // Handle volume set and persist
   function setVolume(v: number) {
     const audio = audioRef.current!
     audio.volume = v

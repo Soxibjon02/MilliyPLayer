@@ -40,3 +40,21 @@ input[type='range']::-webkit-slider-thumb {
   background: #009FE3;
   cursor: pointer;
 }
+
+/* Smooth Page Fade-In Transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+
